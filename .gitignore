@@ -1,0 +1,7 @@
+/.env
+/dist/
+/dist/index.js
+/dist/package.json
+/build.zip
+/build/
+/build/func.zip
