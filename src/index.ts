@@ -31,9 +31,9 @@ bot.command('help', ctx => {
   return ctx.reply(
     'Что вы хотите сделать?',
     Markup.inlineKeyboard([
-      Markup.callbackButton('Перейти к моим вишлистам', 'goToMyWishlists'),
-      Markup.callbackButton('Создать новый вишлист', 'createNewWishlist'),
-      Markup.callbackButton('Посмотреть вишлист другого пользователя', 'showOtherWishlist'),
+      [Markup.callbackButton('Перейти к моим вишлистам', 'goToMyWishlists')],
+      [Markup.callbackButton('Создать новый вишлист', 'createNewWishlist')],
+      [Markup.callbackButton('Посмотреть вишлист другого пользователя', 'showOtherWishlist')],
     ]).extra()
   )
 })
