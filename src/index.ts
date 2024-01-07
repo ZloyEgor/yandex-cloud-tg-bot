@@ -28,13 +28,24 @@ bot.start(async (ctx) => {
 
 bot.command('help', ctx => {
   return ctx.reply(
-    'Dynamic buttons example.',
+    'Что вы хотите сделать?',
     Markup.inlineKeyboard([
-      Markup.callbackButton('Option 1', 'option1'),
-      Markup.callbackButton('Option 2', 'option2'),
-      Markup.callbackButton('Option 3', 'option3')
+      Markup.callbackButton('Перейти к моим вишлистам', 'goToMyWishlists'),
+      Markup.callbackButton('Посмотреть вишлист другого пользователя', 'showOtherWishlist'),
     ]).extra()
   )
+})
+
+bot.action('goToMyWishlists', (ctx) => {
+  return ctx.answerCbQuery('Option 1 selected!')
+})
+
+bot.action('showOtherWishlist', (ctx) => {
+  return ctx.answerCbQuery('showOtherWishlist mock')
+})
+
+bot.action('option3', (ctx) => {
+  return ctx.answerCbQuery('Option 3 selected!')
 })
 
 bot.on('text', (ctx) => {
