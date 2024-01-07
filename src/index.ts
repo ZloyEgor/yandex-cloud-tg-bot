@@ -9,11 +9,11 @@ const {
 } = Telegraf
 import {driver, initDatabase} from "./database";
 import nameScene from "./scenes/name-scene";
-import {getWishlistName} from "./scenes/create-wishlist-scene";
+import {getWishlistNameWizardScene} from "./scenes/create-wishlist-scene";
 
 const bot = new Telegraf(String(process.env.BOT_TOKEN));
 
-const stage = new Stage([getWishlistName]);
+const stage = new Stage([getWishlistNameWizardScene]);
 
 bot.use(session());
 bot.use(stage.middleware());
