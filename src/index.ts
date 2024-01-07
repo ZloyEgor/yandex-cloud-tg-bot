@@ -9,10 +9,11 @@ const {
 } = Telegraf
 import {driver, initDatabase} from "./database";
 import nameScene from "./scenes/name-scene";
+import {getWishlistName} from "./scenes/create-wishlist-scene";
 
 const bot = new Telegraf(String(process.env.BOT_TOKEN));
 
-const stage = new Stage([nameScene]);
+const stage = new Stage([getWishlistName]);
 
 bot.use(session());
 bot.use(stage.middleware());
@@ -31,6 +32,7 @@ bot.command('help', ctx => {
     'Что вы хотите сделать?',
     Markup.inlineKeyboard([
       Markup.callbackButton('Перейти к моим вишлистам', 'goToMyWishlists'),
+      Markup.callbackButton('Создать новый вишлист', 'createNewWishlist'),
       Markup.callbackButton('Посмотреть вишлист другого пользователя', 'showOtherWishlist'),
     ]).extra()
   )
@@ -39,26 +41,31 @@ bot.command('help', ctx => {
 bot.action('goToMyWishlists', (ctx) => {
   return ctx.answerCbQuery('Option 1 selected!')
 })
+bot.action('createNewWishlist', (ctx) => {
+  ctx.reply('Введите название вишлиста');
+  ctx.scene.enter('getWishlistName');
+})
 
 bot.action('showOtherWishlist', (ctx) => {
   return ctx.answerCbQuery('showOtherWishlist mock')
 })
 
-bot.action('option3', (ctx) => {
-  return ctx.answerCbQuery('Option 3 selected!')
-})
-
-bot.on('text', (ctx) => {
-  ctx.reply(`Привет, ${ctx.message.from.username}! Я долбаеб `);
-});
+// bot.on('text', (ctx) => {
+//   ctx.reply(`Привет, ${ctx.message.from.username}! Я долбаеб `);
+// });
 
 module.exports.handler = async function (event, context) {
-  const message = JSON.parse(event.body);
-  await initDatabase();
-  await bot.handleUpdate(message);
-  await driver.destroy();
-  return {
-    statusCode: 200,
-    body: '',
-  };
+  try {
+    const message = JSON.parse(event.body);
+    await initDatabase();
+    await bot.handleUpdate(message);
+    return {
+      statusCode: 200,
+      body: '',
+    };
+  } catch (e) {
+    console.error(`Error occured: ${e}`);
+  } finally {
+    await driver.destroy();
+  }
 };
