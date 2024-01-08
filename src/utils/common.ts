@@ -6,6 +6,6 @@ export const replyError = async (ctx: ContextMessageUpdate, errMessage?: string)
 }
 
 export const wishlistWithItemsToString = (wishlist: WishlistWithItems) => {
-  const itemsStr = wishlist.items.reduce((acc, i) => `${acc}\n• ${i.name}` + (i.description ? `\n${i.description}` : ''), '')
+  const itemsStr = wishlist.items.reduce((acc, i) => `${acc}\n• ${i.name}` + (i.description ? `\n\t${i.description}` : ''), '')
   return `${wishlist.name}:${itemsStr}`;
 }

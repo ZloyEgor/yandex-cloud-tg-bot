@@ -93,5 +93,27 @@ export const deleteItemFromWishlist: Middleware<ContextMessageUpdate> = async (c
   } catch (e) {
     await replyError(ctx);
   }
+}
 
+export const deleteWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
+  const userId = Number(ctx.message?.from?.id);
+  const [wishlistName] = parseArguments(ctx.message?.text);
+
+  if (!wishlistName)
+    return await ctx.reply('Пожалуйста, укажите название вишлиста!');
+
+  const wishlistToDelete = await wishlistService.getWishlist(userId, wishlistName);
+
+  if (!wishlistToDelete) {
+    return await ctx.reply(`Вишлист с именем ${wishlistName} не найден`);
+  }
+
+  try {
+    await wishlistService.deleteWishlist(wishlistToDelete.id);
+    await ctx.reply(`Вишлист ${wishlistName} удален!`)
+  } catch (e) {
+    // await replyError(ctx);
+    await ctx.replyWithMarkdown("```" + e + "```");
+
+  }
 }
