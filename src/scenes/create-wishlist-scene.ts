@@ -24,21 +24,3 @@ getWishlistName.on('text', async (ctx) => {
     ctx.replyWithMarkdown('```' + String(e) + '```');
   }
 });
-
-export const getWishlistNameWizardScene = new WizardScene('getWishlistName',
-  ctx => {
-    ctx.reply("What's your name?");
-    ctx.wizard.state.data = {};
-    return ctx.wizard.next();
-  },
-  ctx => {
-    ctx.wizard.state.data.name = ctx.message.text;
-    ctx.reply('Enter your phone number');
-    return ctx.wizard.next();
-  },
-  ctx => {
-    ctx.wizard.state.data.phone = ctx.message.text;
-    ctx.reply(`Your name is ${ctx.wizard.state.data.name}`);
-    ctx.reply(`Your phone is ${ctx.wizard.state.data.phone}`);
-    return ctx.scene.leave();
-  })
