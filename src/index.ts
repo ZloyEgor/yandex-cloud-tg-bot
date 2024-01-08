@@ -8,7 +8,7 @@ import {
   addItemToWishlist,
   createWishlist,
   deleteItemFromWishlist, deleteWishlist,
-  listUserWishlistsWithItems
+  listUserWishlistsWithItems, shareWishlist
 } from "./commands/wishlist";
 
 const bot = new Telegraf(String(process.env.BOT_TOKEN));
@@ -29,7 +29,8 @@ bot.command('help', ctx => {
     '/add <имя_вишлиста> <название> [описание]\n' +
     '/delete_item <имя_вишлиста> <название>\n' +
     '/delete_list <имя_вишлиста>\n' +
-    '/list\n'
+    '/list\n' +
+    '/share <имя вишлиста>\n'
   );
 })
 
@@ -37,6 +38,7 @@ bot.command('create', createWishlist);
 bot.command('list', listUserWishlistsWithItems);
 bot.command('add', addItemToWishlist);
 bot.command('delete_item', deleteItemFromWishlist);
+bot.command('share', shareWishlist);
 bot.command('delete_list', deleteWishlist);
 
 module.exports.handler = async function (event, context) {

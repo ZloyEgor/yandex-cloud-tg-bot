@@ -95,6 +95,25 @@ export const deleteItemFromWishlist: Middleware<ContextMessageUpdate> = async (c
   }
 }
 
+export const shareWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
+  const userId = Number(ctx.message?.from?.id);
+  const [wishlistName] = parseArguments(ctx.message?.text);
+
+  if (!wishlistName)
+    return await ctx.reply("Пожалуйста, укажите название вишлиста!");
+
+  const targetWishlist = await wishlistService.getWishlist(userId, wishlistName);
+
+  if (!targetWishlist)
+    return await ctx.reply("Похоже, такого вишлиста нет!");
+
+  await ctx.reply('Поделитесь следующим сообщением с теми, кому хотите отправить вишлист:');
+  await ctx.replyWithMarkdown(`🎁 Пользователь @${ctx.message?.from?.username} хочет поделиться с вами своим вишлистом! 🎁\n\n` +
+    `Для просмотра вишлиста зайдите в бота @zloyegor_wishlist_bot и после запуска введите команду:\n\n` +
+    `\`/explore ${targetWishlist.id}\`\n\n` +
+    `Для ознакомления со всеми возможностями бота воспользуйтесь командой \`/help\`\n`);
+}
+
 export const deleteWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
   const userId = Number(ctx.message?.from?.id);
   const [wishlistName] = parseArguments(ctx.message?.text);
@@ -114,6 +133,5 @@ export const deleteWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
   } catch (e) {
     // await replyError(ctx);
     await ctx.replyWithMarkdown("```" + e + "```");
-
   }
 }
