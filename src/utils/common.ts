@@ -6,20 +6,33 @@ export const replyError = async (ctx: ContextMessageUpdate, errMessage?: string)
   await ctx.reply(errMessage || "Похоже, возникла ошибка");
 }
 
+export const prepareStringForMarkdown = (input: string) => input.replace('_', '\\_')
+  .replace('*', '\\*');
+
 export const wishlistItemToString = (item: WishlistItem, options?: FormatOptions) => {
   let mark = '';
-  let descriptionStr = item.description ? `\n${item.description}` : '';
+  let descriptionStr = item.description ? `${item.description}` : null;
   let name = item.name;
 
   if (options?.showBookedMarks)
     mark = item.bookedBy ? '✅ ' : '⏺️ ';
 
-  if (options?.isForMarkDown)
-    descriptionStr = `_${descriptionStr}_`
+  if (options?.isForMarkDown) {
+    name = prepareStringForMarkdown(name)
+  }
 
-  return `${mark}${name}${descriptionStr}`;
+  if (options?.isForMarkDown && descriptionStr)
+    descriptionStr = `_${prepareStringForMarkdown(descriptionStr)}_`;
+
+  if (descriptionStr) {
+    return `${mark}${name}\n${descriptionStr}`;
+  } else {
+    return `${mark}${name}`;
+  }
 }
+
 export const wishlistWithItemsToString = (wishlist: WishlistWithItems, options?: FormatOptions) => {
   const itemsStr = wishlist.items.reduce((acc, i) => `${acc}\n${wishlistItemToString(i, options)}`, '')
-  return `📝 ${wishlist.name}:${itemsStr}`;
+  const name = options?.isForMarkDown ? prepareStringForMarkdown(wishlist.name) : wishlist.name;
+  return `📝 ${name}:${itemsStr}`;
 }

@@ -31,8 +31,13 @@ export const wishlistService = {
     })
   },
 
-  bookItem: async (userId: number, wishlistId: string, itemName: string) => {
-
-    // await wishlistRepository.bookItem()
+  reserveItem: async (userId: number, wishlistId: string, itemName: string) => {
+    const wishlist = await wishlistRepository.selectWishlistById(wishlistId);
+    if (!wishlist) throw new Error('Указанный вишлист не найден');
+    const items = await wishlistRepository.selectItemsOfWishlist(wishlist.id);
+    const targetItem = items.find(item => item.name === itemName);
+    if (!targetItem) throw new Error('Не удалось найти указанный элемент');
+    if (targetItem.bookedBy) throw new Error('Указанный элемент уже забронирован другим пользователем');
+    await wishlistRepository.bookItem(userId, targetItem.id);
   }
 }

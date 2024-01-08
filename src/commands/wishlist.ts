@@ -1,7 +1,7 @@
 import {ContextMessageUpdate, Middleware} from "telegraf";
 import {wishlistRepository} from "../repository/wishlist";
 import {parseArguments} from "../utils/arguments-parser";
-import {replyError, wishlistWithItemsToString} from "../utils/common";
+import {prepareStringForMarkdown, replyError, wishlistItemToString, wishlistWithItemsToString} from "../utils/common";
 import {wishlistService} from "../service/wishlist-service";
 
 export const createWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
@@ -114,12 +114,20 @@ export const shareWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
     `Для ознакомления со всеми возможностями бота воспользуйтесь командой \`/help\`\n`);
 }
 
-export const bookItem: Middleware<ContextMessageUpdate> = async (ctx) => {
+export const reserveItem: Middleware<ContextMessageUpdate> = async (ctx) => {
   const userId = Number(ctx.message?.from?.id);
   const [wishlistId, itemName] = parseArguments(ctx.message?.text);
 
   if (!wishlistId || !itemName)
     return await ctx.reply("Пожалуйста, укажите идентификатор вишлиста и название элемента!");
+
+  try {
+    await wishlistService.reserveItem(userId, wishlistId, itemName);
+    await ctx.reply(`💝 Вы зарезервировали ${itemName}!`)
+  } catch (e) {
+    const err = e as Error;
+    await replyError(ctx, err.message);
+  }
 };
 
 export const exploreWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
@@ -135,7 +143,33 @@ export const exploreWishlist: Middleware<ContextMessageUpdate> = async (ctx) => 
     if (!wishlist)
       return await ctx.reply("Похоже, вишлист не найден. Проверьте введенный идентификатор");
 
-    return await ctx.replyWithMarkdown(`${wishlistWithItemsToString(wishlist, {showBookedMarks: true, isForMarkDown: true})}`);
+    const text = wishlist.items.reduce((acc, item) => {
+      const isReservedByCurrentUser = userId === item.bookedBy;
+      const itemTextDescription = wishlistItemToString(item, {isForMarkDown: true, showBookedMarks: true});
+
+      const itemSummary = (isReservedByCurrentUser ? '💝' : '') + itemTextDescription;
+
+      let itemCommand = '';
+
+      if (item.bookedBy && isReservedByCurrentUser) {
+        itemCommand = `\n\`/unreserve ${wishlist.id} ${item.name}\``;
+      }
+
+      if (!item.bookedBy)
+        itemCommand = `\n\`/reserve ${wishlist.id} ${item.name}\``
+
+      return `${acc}\n\n${itemSummary}${itemCommand}`;
+    }, '');
+
+    try {
+      console.log('userId', userId);
+      console.log('wishlist', JSON.stringify(wishlist));
+      await ctx.replyWithMarkdown(`${text}`);
+    } catch (e) {
+      await ctx.replyWithMarkdown("inner error!\n" + "```" + e + "```");
+
+    }
+
   } catch (e) {
     // await replyError(ctx);
     await ctx.replyWithMarkdown("```" + e + "```");

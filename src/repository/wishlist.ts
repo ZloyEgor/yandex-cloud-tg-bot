@@ -28,13 +28,13 @@ const iValueToWishlistItem = (row: Ydb.IValue): WishlistItem => (
     name: row.items!.at(1)!.bytesValue!.toString(),
     description: row.items!.at(2)?.bytesValue?.toString(),
     wishlistId: row.items!.at(3)!.bytesValue!.toString(),
-    bookedBy: row.items!.at(2)?.uint64Value,
+    bookedBy: +(row.items!.at(4)?.uint64Value?.toString()) || undefined,
   }
 )
 
 const iValueToWishlist = (row: Ydb.IValue): Wishlist => ({
   id: row.items!.at(0)!.bytesValue!.toString(),
-  userId: row.items!.at(1)!.uint64Value,
+  userId: +(row.items!.at(1)!.uint64Value.toString()),
   name: row.items!.at(2)!.bytesValue!.toString()
 })
 
@@ -106,9 +106,9 @@ export const wishlistRepository = {
     })
   },
 
-  bookItem: async (usedId: number, itemId: string) => {
+  bookItem: async (userId: number, itemId: string) => {
     const query =
-      `upsert into item-user (user_id, item_id) values (${usedId}, "${itemId}");`;
+      `upsert into item_user (user_id, item_id) values (${userId}, "${itemId}");`;
 
     await driver.tableClient.withSession(async (session) => {
       await session.executeQuery(query);

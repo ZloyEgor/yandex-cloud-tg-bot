@@ -5,7 +5,7 @@ import {driver, initDatabase} from "./database";
 import Telegraf from "telegraf";
 
 import {
-  addItemToWishlist,
+  addItemToWishlist, reserveItem,
   createWishlist,
   deleteItemFromWishlist, deleteWishlist, exploreWishlist,
   listUserWishlistsWithItems, shareWishlist
@@ -41,6 +41,7 @@ bot.command('delete_item', deleteItemFromWishlist);
 bot.command('share', shareWishlist);
 bot.command('delete_list', deleteWishlist);
 bot.command('explore', exploreWishlist);
+bot.command('reserve', reserveItem);
 
 module.exports.handler = async function (event, context) {
   try {
