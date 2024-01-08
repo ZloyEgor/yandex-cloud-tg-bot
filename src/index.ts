@@ -1,6 +1,3 @@
-// @ts-nocheck
-import {userRepository} from "./repository/user";
-
 import {driver, initDatabase} from "./database";
 import Telegraf from "telegraf";
 
@@ -10,19 +7,21 @@ import {
   deleteItemFromWishlist, deleteWishlist, exploreWishlist,
   listUserWishlistsWithItems, shareWishlist, cancelItemReservation
 } from "./commands/wishlist";
+import {createUser} from "./commands/user";
+
 
 const bot = new Telegraf(String(process.env.BOT_TOKEN));
 
-
-bot.start(async (ctx) => {
-  await ctx.reply('Добро пожаловать!\nВведите /help для ознакомления с возможностями бота!');
-  try {
-    await userRepository.createUser(Number(ctx.message?.from?.id), ctx.message.from.username)
-  } catch (e) {
-    await ctx.replyWithMarkdown('```' + String(e) + '```');
-  }
-});
-
+bot.start(createUser);
+bot.command('create', createWishlist);
+bot.command('list', listUserWishlistsWithItems);
+bot.command('add', addItemToWishlist);
+bot.command('delete_item', deleteItemFromWishlist);
+bot.command('share', shareWishlist);
+bot.command('delete_list', deleteWishlist);
+bot.command('explore', exploreWishlist);
+bot.command('reserve', reserveItem);
+bot.command('undo_reserve', cancelItemReservation);
 bot.command('help', ctx => {
   return ctx.replyWithMarkdown("🤖 Актуальный список моих команд:\n\n" +
     '🆕 \`/create имя_вишлиста\` – создать новый вишлист\n' +
@@ -36,16 +35,6 @@ bot.command('help', ctx => {
     '💔 \`/undo_reserve код_вишлиста имя_элемента\` – отменить бронирование элемента вишлиста'
   );
 })
-
-bot.command('create', createWishlist);
-bot.command('list', listUserWishlistsWithItems);
-bot.command('add', addItemToWishlist);
-bot.command('delete_item', deleteItemFromWishlist);
-bot.command('share', shareWishlist);
-bot.command('delete_list', deleteWishlist);
-bot.command('explore', exploreWishlist);
-bot.command('reserve', reserveItem);
-bot.command('undo_reserve', cancelItemReservation);
 
 module.exports.handler = async function (event, context) {
   try {

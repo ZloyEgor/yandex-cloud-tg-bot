@@ -6,7 +6,7 @@ export const replyError = async (ctx: ContextMessageUpdate, errMessage?: string)
   await ctx.reply(errMessage || "Похоже, возникла ошибка");
 }
 
-export const prepareStringForMarkdown = (input: string) => input.replace('_', '\\_')
+export const prepareStringForMarkdown = (input: string) => input.replaceAll('_', '\\_')
   .replace('*', '\\*');
 
 export const wishlistItemToString = (item: WishlistItem, options?: FormatOptions) => {
