@@ -106,9 +106,18 @@ export const wishlistRepository = {
     })
   },
 
-  bookItem: async (userId: number, itemId: string) => {
+  reserveItem: async (userId: number, itemId: string) => {
     const query =
       `upsert into item_user (user_id, item_id) values (${userId}, "${itemId}");`;
+
+    await driver.tableClient.withSession(async (session) => {
+      await session.executeQuery(query);
+    });
+  },
+
+  deleteItemReserve: async (userId: number, itemId: string) => {
+    const query =
+      `delete from item_user where user_id = ${userId} and item_id = "${itemId}"`;
 
     await driver.tableClient.withSession(async (session) => {
       await session.executeQuery(query);

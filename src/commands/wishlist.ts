@@ -130,6 +130,22 @@ export const reserveItem: Middleware<ContextMessageUpdate> = async (ctx) => {
   }
 };
 
+export const cancelItemReservation: Middleware<ContextMessageUpdate> = async (ctx) => {
+  const userId = Number(ctx.message?.from?.id);
+  const [wishlistId, itemName] = parseArguments(ctx.message?.text);
+
+  if (!wishlistId || !itemName)
+    return await ctx.reply("Пожалуйста, укажите идентификатор вишлиста и название элемента!");
+
+  try {
+    await wishlistService.cancelItemReserve(userId, wishlistId, itemName);
+    await ctx.reply(`💔 Вы отменили резервацию ${itemName}!`)
+  } catch (e) {
+    const err = e as Error;
+    await replyError(ctx, err.message);
+  }
+};
+
 export const exploreWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
   const userId = Number(ctx.message?.from?.id);
   const [wishlistId] = parseArguments(ctx.message?.text);
@@ -152,7 +168,7 @@ export const exploreWishlist: Middleware<ContextMessageUpdate> = async (ctx) => 
       let itemCommand = '';
 
       if (item.bookedBy && isReservedByCurrentUser) {
-        itemCommand = `\n\`/unreserve ${wishlist.id} ${item.name}\``;
+        itemCommand = `\n\`/undo_reserve ${wishlist.id} ${item.name}\``;
       }
 
       if (!item.bookedBy)

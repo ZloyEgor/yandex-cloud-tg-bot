@@ -37,7 +37,17 @@ export const wishlistService = {
     const items = await wishlistRepository.selectItemsOfWishlist(wishlist.id);
     const targetItem = items.find(item => item.name === itemName);
     if (!targetItem) throw new Error('Не удалось найти указанный элемент');
-    if (targetItem.bookedBy) throw new Error('Указанный элемент уже забронирован другим пользователем');
-    await wishlistRepository.bookItem(userId, targetItem.id);
+    if (targetItem.bookedBy) throw new Error('Указанный элемент уже забронирован!');
+    await wishlistRepository.reserveItem(userId, targetItem.id);
+  },
+
+  cancelItemReserve: async (userId: number, wishlistId: string, itemName: string) => {
+    const wishlist = await wishlistRepository.selectWishlistById(wishlistId);
+    if (!wishlist) throw new Error('Указанный вишлист не найден');
+    const items = await wishlistRepository.selectItemsOfWishlist(wishlist.id);
+    const targetItem = items.find(item => item.name === itemName);
+    if (!targetItem) throw new Error('Не удалось найти указанный элемент');
+    if (targetItem.bookedBy !== userId) throw new Error('Указанный элемент забронирован другим пользователем');
+    await wishlistRepository.deleteItemReserve(userId, targetItem.id);
   }
 }
