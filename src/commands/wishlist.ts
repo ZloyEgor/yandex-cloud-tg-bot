@@ -34,7 +34,7 @@ export const listWishlists: Middleware<ContextMessageUpdate> = async (ctx) => {
 
 export const listUserWishlistsWithItems: Middleware<ContextMessageUpdate> = async (ctx) => {
   const userId = Number(ctx.message?.from?.id);
-  const wishlists = await wishlistService.selectWishlistsWithItemsByUserId(userId);
+  const wishlists = await wishlistService.getWishlistsWithItemsByUserId(userId);
 
   const wishlistsString = wishlists.reduce((acc, cur) => `${acc}\n\n${wishlistWithItemsToString(cur)}`, '');
   await ctx.reply(`Вот ваши вишлисты:${wishlistsString}`)
@@ -109,10 +109,38 @@ export const shareWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
 
   await ctx.reply('Поделитесь следующим сообщением с теми, кому хотите отправить вишлист:');
   await ctx.replyWithMarkdown(`🎁 Пользователь @${ctx.message?.from?.username} хочет поделиться с вами своим вишлистом! 🎁\n\n` +
-    `Для просмотра вишлиста зайдите в бота @zloyegor_wishlist_bot и после запуска введите команду:\n\n` +
+    `Для просмотра вишлиста зайдите в бота @zloyegor\_wishlist\_bot и после запуска введите команду:\n\n` +
     `\`/explore ${targetWishlist.id}\`\n\n` +
     `Для ознакомления со всеми возможностями бота воспользуйтесь командой \`/help\`\n`);
 }
+
+export const bookItem: Middleware<ContextMessageUpdate> = async (ctx) => {
+  const userId = Number(ctx.message?.from?.id);
+  const [wishlistId, itemName] = parseArguments(ctx.message?.text);
+
+  if (!wishlistId || !itemName)
+    return await ctx.reply("Пожалуйста, укажите идентификатор вишлиста и название элемента!");
+};
+
+export const exploreWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
+  const userId = Number(ctx.message?.from?.id);
+  const [wishlistId] = parseArguments(ctx.message?.text);
+
+  if (!wishlistId)
+    return await ctx.reply("Пожалуйста, укажите идентификатор вишлиста!");
+
+  try {
+    const wishlist = await wishlistService.getWishlistById(wishlistId, userId);
+
+    if (!wishlist)
+      return await ctx.reply("Похоже, вишлист не найден. Проверьте введенный идентификатор");
+
+    return await ctx.replyWithMarkdown(`${wishlistWithItemsToString(wishlist, {showBookedMarks: true, isForMarkDown: true})}`);
+  } catch (e) {
+    // await replyError(ctx);
+    await ctx.replyWithMarkdown("```" + e + "```");
+  }
+};
 
 export const deleteWishlist: Middleware<ContextMessageUpdate> = async (ctx) => {
   const userId = Number(ctx.message?.from?.id);

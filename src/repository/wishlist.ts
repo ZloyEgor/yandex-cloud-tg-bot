@@ -1,6 +1,7 @@
 import {v4 as uuidv4} from 'uuid';
 import {driver} from "../database";
 import {Ydb} from "ydb-sdk";
+import {UserId} from "./user";
 
 export type Wishlist = {
   id: string;
@@ -14,11 +15,28 @@ export type WishlistItem = {
   wishlistId: string;
   name: string;
   description?: string;
+  bookedBy?: UserId;
 }
 
 export type WishlistWithItems = Wishlist & {
   items: WishlistItem[];
 }
+
+const iValueToWishlistItem = (row: Ydb.IValue): WishlistItem => (
+  {
+    id: row.items!.at(0)!.bytesValue!.toString(),
+    name: row.items!.at(1)!.bytesValue!.toString(),
+    description: row.items!.at(2)?.bytesValue?.toString(),
+    wishlistId: row.items!.at(3)!.bytesValue!.toString(),
+    bookedBy: row.items!.at(2)?.uint64Value,
+  }
+)
+
+const iValueToWishlist = (row: Ydb.IValue): Wishlist => ({
+  id: row.items!.at(0)!.bytesValue!.toString(),
+  userId: row.items!.at(1)!.uint64Value,
+  name: row.items!.at(2)!.bytesValue!.toString()
+})
 
 export const wishlistRepository = {
   createWishlist: async (userId: number, name: string) => {
@@ -47,11 +65,7 @@ export const wishlistRepository = {
 
       if (result.rows?.length && result.rows.length > 0) {
         const row = result.rows?.at(0) as Ydb.IValue;
-        const wishlist = {
-          id: row.items!.at(0)!.bytesValue!.toString(),
-          userId: row.items!.at(1)!.uint64Value,
-          name: row.items!.at(2)!.bytesValue!.toString()
-        };
+        const wishlist = iValueToWishlist(row);
         resolve(wishlist);
       } else
         resolve(undefined);
@@ -63,13 +77,23 @@ export const wishlistRepository = {
     driver.tableClient.withSession(async (session) => {
       const result = await session.executeQuery(query).then(r => r.resultSets[0]);
 
-      const wishlists: Wishlist[] = result.rows?.map(row => ({
-        id: row.items!.at(0)!.bytesValue!.toString(),
-        userId: row.items!.at(1)!.uint64Value,
-        name: row.items!.at(2)!.bytesValue!.toString()
-      })) || [];
+      const wishlists: Wishlist[] = result.rows?.map(row => iValueToWishlist(row)) || [];
 
       resolve(wishlists);
+    })
+  }),
+
+  selectWishlistById: async (id: string) => new Promise<Wishlist | undefined>(resolve => {
+    const query = `select id, user_id, name from wishlist where id = "${id}";`;
+    driver.tableClient.withSession(async (session) => {
+      const result = await session.executeQuery(query).then(r => r.resultSets[0]);
+
+      if (result.rows?.length && result.rows.length > 0) {
+        const row = result.rows?.at(0) as Ydb.IValue;
+        const wishlist = iValueToWishlist(row);
+        resolve(wishlist);
+      } else
+        resolve(undefined);
     })
   }),
 
@@ -82,6 +106,28 @@ export const wishlistRepository = {
     })
   },
 
+  bookItem: async (usedId: number, itemId: string) => {
+    const query =
+      `upsert into item-user (user_id, item_id) values (${usedId}, "${itemId}");`;
+
+    await driver.tableClient.withSession(async (session) => {
+      await session.executeQuery(query);
+    });
+  },
+
+  selectItemsOfWishlist: async (wishlistId: string) => new Promise<WishlistItem[]>(resolve => {
+    const query =
+      `select id, name, description, wishlist_id, user_id from items
+      left join item_user on items.id = item_user.item_id
+      where wishlist_id="${wishlistId}";`;
+
+    driver.tableClient.withSession(async (session) => {
+      const result = await session.executeQuery(query).then(r => r.resultSets[0]);
+      const items = result.rows?.map(iValueToWishlistItem) || [];
+      resolve(items);
+    });
+  }),
+
   deleteItemFromWishlist: async ({name, wishlistId}: Omit<WishlistItem, 'id' | 'description'>) => {
     const query =
       `delete from items where name = "${name}" and wishlist_id = "${wishlistId}"`;
@@ -91,41 +137,17 @@ export const wishlistRepository = {
     });
   },
 
-  selectItemsOfWishlist: async (wishlistId: string) => new Promise<WishlistItem[]>(resolve => {
-    const query =
-      `select id, name, decription, wishlist_id from items where wishlist_id = "${wishlistId}"`;
-
-    driver.tableClient.withSession(async (session) => {
-      const result = await session.executeQuery(query).then(r => r.resultSets[0]);
-
-
-      const items: WishlistItem[] = result.rows?.map(row => ({
-        id: row.items!.at(0)!.bytesValue!.toString(),
-        name: row.items!.at(1)!.bytesValue!.toString(),
-        description: row.items!.at(2)?.bytesValue?.toString(),
-        wishlistId: row.items!.at(3)!.bytesValue!.toString(),
-      })) || [];
-
-      resolve(items);
-    })
-  }),
-
   selectItemsOfUser: async (userId: number) => new Promise<WishlistItem[]>(resolve => {
     const query =
-      `select items.id, items.name, items.description, wishlist_id from items 
+      `select items.id, items.name, items.description, wishlist_id, item_user.user_id from items 
         inner join wishlist on items.wishlist_id = wishlist.id 
         inner join users on users.id = wishlist.user_id
+        left join item_user on items.id = item_user.item_id
         where users.id = ${userId};`;
 
     driver.tableClient.withSession(async (session) => {
       const result = await session.executeQuery(query).then(r => r.resultSets[0]);
-      const items: WishlistItem[] = result.rows?.map(row => ({
-        id: row.items!.at(0)!.bytesValue!.toString(),
-        name: row.items!.at(1)!.bytesValue!.toString(),
-        description: row.items!.at(2)?.bytesValue?.toString(),
-        wishlistId: row.items!.at(3)!.bytesValue!.toString(),
-      })) || [];
-
+      const items: WishlistItem[] = result.rows?.map(row => iValueToWishlistItem(row)) || [];
       resolve(items);
     })
   }),

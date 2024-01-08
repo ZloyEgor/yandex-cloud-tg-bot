@@ -1,5 +1,7 @@
 import {driver} from "../database";
 
+export type UserId = number;
+
 export const userRepository = {
     createUser: async (id: number, userName: string) => {
         console.log(`creating user: id is ${id}, userName is ${userName}`);
