@@ -32,7 +32,8 @@ export const wishlistItemToString = (item: WishlistItem, options?: FormatOptions
 }
 
 export const wishlistWithItemsToString = (wishlist: WishlistWithItems, options?: FormatOptions) => {
-  const itemsStr = wishlist.items.reduce((acc, i) => `${acc}\n${wishlistItemToString(i, options)}`, '')
-  const name = options?.isForMarkDown ? prepareStringForMarkdown(wishlist.name) : wishlist.name;
-  return `📝 ${name}:${itemsStr}`;
+  const itemsStr = wishlist.items.reduce((acc, i) => `${acc}\n${wishlistItemToString(i, options)}\n`, '')
+  const name = options?.isForMarkDown ? `*${wishlist.name}*` : wishlist.name;
+  const shareCommand = `\`/explore ${wishlist.id}\``;
+  return `${name}:\n${itemsStr}\n_Ссылка_:\n${shareCommand}`;
 }

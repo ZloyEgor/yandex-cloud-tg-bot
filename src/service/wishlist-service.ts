@@ -13,15 +13,19 @@ export const wishlistService = {
     return wishlistsWithItems;
   },
 
-  getWishlist: async (userId: number, wishlistName: string) => {
-    return await wishlistRepository.selectWishlistByUserIdAndWishlistName(userId, wishlistName);
+  getWishlist: async (userId: number, wishlistName: string): Promise<WishlistWithItems | undefined> => {
+    const wishlist = await wishlistRepository.selectWishlistByUserIdAndWishlistName(userId, wishlistName);
+    if (!wishlist) return;
+    const items = await wishlistRepository.selectItemsOfUser(userId);
+
+    return {...wishlist, items: items.filter(i => i.wishlistId === wishlist.id)};
   },
 
   deleteWishlist: async (wishlistId: string) => {
     await wishlistRepository.deleteWishlist(wishlistId);
   },
 
-  getWishlistById: async (wishlistId: string, userId?: number): Promise<WishlistWithItems | undefined> => {
+  getWishlistById: async (wishlistId: string): Promise<WishlistWithItems | undefined> => {
     const wishlist = await wishlistRepository.selectWishlistById(wishlistId);
     if (!wishlist) return;
     const items = await wishlistRepository.selectItemsOfWishlist(wishlist.id);
